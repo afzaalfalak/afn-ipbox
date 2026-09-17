@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFN IPBox</title>
+<style>
+:root{--bg:#070b12;--card:#101827;--card2:#151f31;--text:#f4f7fb;--muted:#9eabc0;--accent:#19d3ae;--accent2:#4d7cff;--danger:#ff5d73;--border:#243147}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#05080e,#0b1220);color:var(--text)}
+header{position:sticky;top:0;z-index:10;background:rgba(5,8,14,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav{max-width:1100px;margin:auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-size:22px;font-weight:800}.logo span{color:var(--accent)}
+button,.btn{border:0;border-radius:10px;padding:11px 15px;background:var(--accent);color:#03120f;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.alt{background:var(--accent2);color:#fff}.btn.dark{background:#202c40;color:#fff}.btn.red{background:var(--danger);color:#fff}
+.container{max-width:1100px;margin:auto;padding:22px 18px}
+.hero{text-align:center;padding:38px 12px}.hero h1{font-size:42px;margin:5px 0}.hero h1 span{color:var(--accent)}.hero p{color:var(--muted);max-width:650px;margin:12px auto 20px;line-height:1.6}
+.section-title{margin:28px 0 14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.card{background:linear-gradient(145deg,var(--card),#0c1421);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 10px 30px #0004}
+.plan h3{margin:0 0 8px}.price{font-size:28px;font-weight:800;color:var(--accent);margin:10px 0}.plan small{color:var(--muted);display:block;margin-bottom:15px}
+.player-wrap{background:#000;border:1px solid var(--border);border-radius:16px;overflow:hidden}.video-box{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:#020305}
+video{width:100%;height:100%;background:#000}.player-note{padding:12px 15px;color:var(--muted);font-size:13px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.controls input{flex:1;min-width:180px}
+input,select{width:100%;padding:12px;border-radius:9px;border:1px solid var(--border);background:#0a111d;color:#fff;outline:none}
+.modal{display:none;position:fixed;inset:0;background:#0009;z-index:30;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.modal-box{max-width:460px;width:100%;background:#101827;border:1px solid var(--border);border-radius:18px;padding:20px}.modal-box h2{margin-top:0}
+.notice{padding:14px;border-radius:12px;background:#0b1c20;border:1px solid #16443d;color:#b8fff1;line-height:1.5}
+.payment{margin-top:12px}.payment b{color:#fff}.payment div{margin:7px 0;color:var(--muted)}
+footer{text-align:center;color:var(--muted);padding:30px 15px;border-top:1px solid var(--border);margin-top:35px}
+.hidden{display:none!important}.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#1c2940;color:#bcd0ff;font-size:12px}
+.admin-table{width:100%;border-collapse:collapse;font-size:13px}.admin-table th,.admin-table td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
+@media(max-width:600px){.hero h1{font-size:32px}.nav{padding:12px}.container{padding:18px 12px}}
+</style>
+</head>
+<body>
+<header><div class="nav"><div class="logo">AFN <span>IPBox</span></div><div><button class="btn dark" onclick="openModal('loginModal')">Login</button> <button onclick="openModal('signupModal')">Sign Up</button></div></div></header>
+
+<main class="container">
+<section class="hero">
+<h1>AFN <span>IPBox</span></h1>
+<p>Online IPTV player, subscription plans and WhatsApp payment verification — optimized for mobile.</p>
+<a class="btn" href="#plans">View Plans</a>
+</section>
+
+<section id="dashboard" class="card hidden">
+<h2>User Dashboard</h2>
+<p id="welcome"></p><p>Plan: <span id="userPlan" class="badge">Not activated</span></p>
+<p>Expiry: <span id="userExpiry">—</span></p>
+<button class="btn red" onclick="logout()">Logout</button>
+</section>
+
+<section>
+<h2 class="section-title">📺 Online Media Player</h2>
+<div class="player-wrap">
+<div class="video-box"><video id="video" controls playsinline></video></div>
+<div class="player-note">Paste a direct compatible stream URL below. Browser playback depends on the stream format and CORS/server settings.</div>
+</div>
+<div class="controls">
+<input id="streamUrl" placeholder="https://example.com/stream.m3u8">
+<button onclick="loadStream()">▶ Play</button>
+<button class="btn dark" onclick="document.getElementById('video').requestFullscreen()">⛶ Fullscreen</button>
+</div>
+</section>
+
+<section id="plans">
+<h2 class="section-title">💎 Subscription Plans</h2>
+<div class="grid" id="planGrid"></div>
+</section>
+
+<section>
+<h2 class="section-title">💳 Payment</h2>
+<div class="card payment">
+<div><b>Bank/Account</b><br>Account Title: HA Computer Shop<br>Account No: 980247291</div>
+<div><b>Easypaisa</b><br>Account Title: Afzaal Hassan<br>Number: 03284192094</div>
+<div class="notice">Payment ke baad WhatsApp par selected plan aur transaction details bhej kar activation request karein.</div>
+<br><a id="whatsappBtn" class="btn" target="_blank">📲 WhatsApp Payment Verification</a>
+</div>
+</section>
+
+<section>
+<h2 class="section-title">🔗 IPTV Source</h2>
+<div class="card"><p>Public IPTV playlist/source directory:</p><a class="btn alt" target="_blank" href="https://iptv-org.github.io/">Open IPTV-org</a></div>
+</section>
+
+<section id="adminPanel" class="card hidden">
+<h2>🔐 Admin Panel</h2>
+<div class="grid">
+<div><label>User</label><input id="adminEmail" placeholder="user email"></div>
+<div><label>Plan</label><select id="adminPlan"></select></div>
+<div><label>Expiry</label><input id="adminExpiry" type="date"></div>
+</div><br><button onclick="activateUser()">Activate / Update User</button>
+<h3>Saved Users</h3><div id="adminUsers"></div>
+</section>
+</main>
+
+<footer>© 2026 AFN IPBox • Built for mobile</footer>
+
+<div id="loginModal" class="modal"><div class="modal-box">
+<h2>Login</h2><input id="loginEmail" placeholder="Email"><br><br><input id="loginPass" type="password" placeholder="Password"><br><br>
+<button onclick="login()">Login</button> <button class="btn dark" onclick="closeModals()">Close</button><p id="loginMsg"></p>
+</div></div>
+
+<div id="signupModal" class="modal"><div class="modal-box">
+<h2>Create Account</h2><input id="signupName" placeholder="Name"><br><br><input id="signupEmail" placeholder="Email"><br><br><input id="signupPass" type="password" placeholder="Password"><br><br>
+<button onclick="signup()">Create Account</button> <button class="btn dark" onclick="closeModals()">Close</button><p id="signupMsg"></p>
+</div></div>
+
+<script>
+const plans=[
+{name:"Free Trial",days:1,price:0},
+{name:"Basic",days:7,price:22},
+{name:"Silver",days:30,price:62},
+{name:"Gold",days:90,price:130},
+{name:"Premium",days:180,price:220},
+{name:"VIP",days:356,price:400},
+{name:"Ultra V-VIP",days:0,price:960,lifetime:true}
+];
+const grid=document.getElementById('planGrid'), adminPlan=document.getElementById('adminPlan');
+plans.forEach((p,i)=>{
+grid.innerHTML+=`<div class="card plan"><span class="badge">Plan ${i+1}</span><h3>${p.name}</h3><small>${p.lifetime?'Lifetime':p.days+' Day'+(p.days>1?'s':'')}</small><div class="price">${p.price} PKR</div><button onclick="selectPlan(${i})">Choose Plan</button></div>`;
+adminPlan.innerHTML+=`<option value="${i}">${p.name} — ${p.price} PKR</option>`;
+});
+let selected=plans[0];
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModals(){document.querySelectorAll('.modal').forEach(x=>x.classList.remove('show'))}
+function selectPlan(i){
+selected=plans[i];
+const msg=`Assalam-o-Alaikum, AFN IPBox subscription activate karni hai.%0A%0APlan: ${selected.name}%0ADuration: ${selected.lifetime?'Lifetime':selected.days+' Day(s)'}%0APrice: ${selected.price} PKR%0A%0APayment method: [Bank / Easypaisa]%0ATransaction ID: [Enter ID]`;
+document.getElementById('whatsappBtn').href='https://wa.me/923284192094?text='+msg;
+document.getElementById('whatsappBtn').scrollIntoView({behavior:'smooth',block:'center'});
+}
+selectPlan(0);
+
+function getUsers(){return JSON.parse(localStorage.getItem('afn_users')||'{}')}
+function saveUsers(u){localStorage.setItem('afn_users',JSON.stringify(u))}
+function signup(){
+const name=signupName.value.trim(),email=signupEmail.value.trim().toLowerCase(),pass=signupPass.value;
+if(!name||!email||!pass)return signupMsg.textContent='All fields required.';
+const u=getUsers(); if(u[email])return signupMsg.textContent='Account already exists.';
+u[email]={name,pass,plan:'Not activated',expiry:'—'}; saveUsers(u);
+signupMsg.textContent='Account created. You can login now.'; setTimeout(closeModals,900);
+}
+function login(){
+const email=loginEmail.value.trim().toLowerCase(),pass=loginPass.value,u=getUsers();
+if(email==='admin@afnipbox.local'&&pass==='admin123'){localStorage.setItem('afn_session','admin');closeModals();showAdmin();return}
+if(!u[email]||u[email].pass!==pass)return loginMsg.textContent='Invalid email or password.';
+localStorage.setItem('afn_session',email);closeModals();showDashboard(email);
+}
+function showDashboard(email){
+const u=getUsers()[email];dashboard.classList.remove('hidden');welcome.textContent='Welcome, '+u.name+'!';userPlan.textContent=u.plan;userExpiry.textContent=u.expiry;
+}
+function logout(){localStorage.removeItem('afn_session');location.reload()}
+function showAdmin(){adminPanel.classList.remove('hidden');dashboard.classList.add('hidden');renderUsers()}
+function activateUser(){
+const email=adminEmail.value.trim().toLowerCase(),u=getUsers();if(!u[email])return alert('User not found.');
+const p=plans[+adminPlan.value];u[email].plan=p.name;u[email].expiry=p.lifetime?'Lifetime':adminExpiry.value||calcDate(p.days);saveUsers(u);renderUsers();alert('User updated.');
+}
+function calcDate(days){let d=new Date();d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)}
+function renderUsers(){const u=getUsers();adminUsers.innerHTML=Object.entries(u).map(([e,x])=>`<div class="card" style="margin:8px 0"><b>${x.name}</b> — ${e}<br>Plan: ${x.plan} | Expiry: ${x.expiry}</div>`).join('')||'<p>No users yet.</p>'}
+function loadStream(){const url=streamUrl.value.trim();if(!url)return alert('Stream URL enter karein.');const v=document.getElementById('video');v.src=url;v.play().catch(()=>{});}
+const session=localStorage.getItem('afn_session');if(session==='admin')showAdmin();else if(session)showDashboard(session);
+</script>
+</body>
+</html>
